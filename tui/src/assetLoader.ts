@@ -107,10 +107,9 @@ export async function loadFurnitureAssets(workspaceRoot: string): Promise<Loaded
             const assetPath = path.join(itemDir, asset.file);
             const resolvedAsset = path.resolve(assetPath);
             const resolvedDir = path.resolve(itemDir);
-            if (
-              !resolvedAsset.startsWith(resolvedDir + path.sep) &&
-              resolvedAsset !== resolvedDir
-            ) {
+            // Ensure the asset is within the expected directory (prevent path traversal)
+            const relative = path.relative(resolvedDir, resolvedAsset);
+            if (relative.startsWith('..') || path.isAbsolute(relative)) {
               continue;
             }
             if (!fs.existsSync(assetPath)) continue;

@@ -14,9 +14,13 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 import { TuiApp } from './app.js';
 
 const VERSION = process.env.TUI_VERSION ?? '0.1.0';
+
+// Resolve directory of this script using import.meta.url (reliable in ESM)
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
 function printHelp(): void {
   console.log(`
@@ -85,7 +89,6 @@ async function main(): Promise<void> {
   }
 
   // Resolve assets root: look for webview-ui/public/assets relative to this script
-  const scriptDir = path.dirname(process.argv[1] ?? '');
   const candidates = [
     path.join(scriptDir, '..', 'webview-ui', 'public'),  // dev mode: tui/dist/index.js
     path.join(scriptDir, '..', '..', 'webview-ui', 'public'), // nested dist

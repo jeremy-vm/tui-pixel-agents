@@ -158,10 +158,8 @@ export class PixelBuffer {
 
   /** Draw a sprite flipped horizontally */
   drawSpriteFlipped(sprite: string[][], x: number, y: number, zoom = 1, alpha = 1): void {
-    const cols = sprite[0]?.length ?? 0;
     const flipped = sprite.map((row) => [...row].reverse());
     this.drawSprite(flipped, x, y, zoom, alpha);
-    void cols; // silence unused
   }
 
   getPixel(x: number, y: number): number {

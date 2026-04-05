@@ -69,22 +69,22 @@ export function pixelBufferToAnsi(
       const botA = (botPixel >> 24) & 0xff;
 
       // Resolve colors with background fallback for transparent pixels
-      let [topR, topG, topBl] = topA > 0
+      let [topR, topG, topB] = topA > 0
         ? [((topPixel >> 16) & 0xff), ((topPixel >> 8) & 0xff), (topPixel & 0xff)]
         : [bgR, bgG, bgB];
-      let [botR, botG, botBl] = botA > 0
+      let [botR, botG, botB] = botA > 0
         ? [((botPixel >> 16) & 0xff), ((botPixel >> 8) & 0xff), (botPixel & 0xff)]
         : [bgR, bgG, bgB];
 
       // Build ANSI escape sequences only when color changes
       let esc = '';
-      if (topR !== lastFgR || topG !== lastFgG || topBl !== lastFgB) {
-        esc += fg(topR, topG, topBl);
-        lastFgR = topR; lastFgG = topG; lastFgB = topBl;
+      if (topR !== lastFgR || topG !== lastFgG || topB !== lastFgB) {
+        esc += fg(topR, topG, topB);
+        lastFgR = topR; lastFgG = topG; lastFgB = topB;
       }
-      if (botR !== lastBgR || botG !== lastBgG || botBl !== lastBgB) {
-        esc += bg(botR, botG, botBl);
-        lastBgR = botR; lastBgG = botG; lastBgB = botBl;
+      if (botR !== lastBgR || botG !== lastBgG || botB !== lastBgB) {
+        esc += bg(botR, botG, botB);
+        lastBgR = botR; lastBgG = botG; lastBgB = botB;
       }
 
       parts.push(esc, HALF_BLOCK);

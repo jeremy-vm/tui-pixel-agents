@@ -49,7 +49,7 @@ export function enableRawMode(): () => void {
       sequence: key?.sequence ?? str ?? '',
       name: key?.name ?? str ?? '',
       ctrl: key?.ctrl ?? false,
-      isSpecial: !!(key?.special || (key?.sequence?.startsWith('\x1b') && key?.sequence?.length > 1)),
+      isSpecial: Boolean(key?.special || (key?.sequence?.startsWith('\x1b') && key?.sequence?.length > 1)),
     };
     for (const h of handlers) h(event);
   };

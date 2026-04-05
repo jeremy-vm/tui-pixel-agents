@@ -5,9 +5,12 @@
  *   1. Try to open a new tmux window (if $TMUX is set)
  *   2. Try platform-specific terminal emulators (macOS: osascript, Linux: xterm)
  *   3. Fall back: print the command to the status display for manual copy-paste
+ *
+ * Security note: All paths and arguments are passed as separate argv elements
+ * (not interpolated into shell strings) to prevent command injection.
  */
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import * as os from 'os';
 
 /** Result of a launch attempt */
@@ -20,9 +23,10 @@ export interface LaunchResult {
   hint: string;
 }
 
-function tryExec(cmd: string): Promise<boolean> {
+/** Promisify execFile — returns true if the process exits successfully. */
+function trySpawn(cmd: string, args: string[]): Promise<boolean> {
   return new Promise((resolve) => {
-    exec(cmd, (err) => resolve(!err));
+    execFile(cmd, args, (err) => resolve(!err));
   });
 }
 
@@ -36,14 +40,13 @@ export async function launchClaudeSession(
   bypassPermissions: boolean,
 ): Promise<LaunchResult> {
   const claudeArgs = bypassPermissions
-    ? `--session-id ${sessionId} --dangerously-skip-permissions`
-    : `--session-id ${sessionId}`;
-  const command = `claude ${claudeArgs}`;
+    ? ['--session-id', sessionId, '--dangerously-skip-permissions']
+    : ['--session-id', sessionId];
+  const command = `claude ${claudeArgs.join(' ')}`;
 
-  // 1. Try tmux (works in any terminal if tmux is running)
+  // 1. Try tmux — pass cwd and command as separate argv elements (no shell)
   if (process.env.TMUX) {
-    const tmuxCmd = `tmux new-window -c ${JSON.stringify(cwd)} ${JSON.stringify(command)}`;
-    if (await tryExec(tmuxCmd)) {
+    if (await trySpawn('tmux', ['new-window', '-c', cwd, 'claude', ...claudeArgs])) {
       return {
         opened: true,
         command,
@@ -55,30 +58,31 @@ export async function launchClaudeSession(
   const platform = os.platform();
 
   if (platform === 'darwin') {
-    // macOS: AppleScript to open Terminal.app with the command
-    const script = `tell application "Terminal" to do script "cd ${cwd.replace(/"/g, '\\"')} && ${command.replace(/"/g, '\\"')}"`;
-    const appleScriptCmd = `osascript -e ${JSON.stringify(script)}`;
-    if (await tryExec(appleScriptCmd)) {
-      return {
-        opened: true,
-        command,
-        hint: 'Opened Terminal.app with Claude Code session',
-      };
+    // macOS: AppleScript via osascript. Build the do script argument programmatically.
+    // The AppleScript string is constructed so that cwd and command are embedded as
+    // AppleScript string literals, with both backslash and double-quote chars escaped.
+    const appleEscape = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const termScript = `tell application "Terminal" to do script "cd ${appleEscape(cwd)} && ${appleEscape(command)}"`;
+    if (await trySpawn('osascript', ['-e', termScript])) {
+      return { opened: true, command, hint: 'Opened Terminal.app with Claude Code session' };
     }
     // Try iTerm2
-    const iTermScript = `tell application "iTerm2" to create window with default profile command "bash -c 'cd ${cwd.replace(/"/g, '\\"')} && ${command.replace(/"/g, '\\"')}'"`;
-    if (await tryExec(`osascript -e ${JSON.stringify(iTermScript)}`)) {
+    const itermScript = `tell application "iTerm2" to create window with default profile command "bash -c 'cd ${appleEscape(cwd)} && ${appleEscape(command)}'"`;
+    if (await trySpawn('osascript', ['-e', itermScript])) {
       return { opened: true, command, hint: 'Opened iTerm2 with Claude Code session' };
     }
   } else if (platform === 'linux') {
-    // Linux: try common terminal emulators
-    const cdCmd = `bash -c 'cd ${JSON.stringify(cwd)} && ${command}'`;
-    for (const term of [
-      `gnome-terminal -- ${cdCmd}`,
-      `xterm -e ${JSON.stringify(`bash -c 'cd ${cwd} && ${command}'`)}`,
-      `konsole -e bash -c ${JSON.stringify(`cd ${cwd} && ${command}`)}`,
-    ]) {
-      if (await tryExec(term)) {
+    // Linux: try common terminal emulators.
+    // Pass the shell command as a single argument to bash -c to avoid extra quoting issues.
+    const bashCmd = `cd -- "${cwd.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}" && ${command}`;
+    const attempts: [string, string[]][] = [
+      ['gnome-terminal', ['--', 'bash', '-c', bashCmd]],
+      ['xterm', ['-e', 'bash', '-c', bashCmd]],
+      ['konsole', ['-e', 'bash', '-c', bashCmd]],
+      ['xfce4-terminal', ['-e', `bash -c ${JSON.stringify(bashCmd)}`]],
+    ];
+    for (const [term, args] of attempts) {
+      if (await trySpawn(term, args)) {
         return { opened: true, command, hint: `Opened terminal with Claude Code session` };
       }
     }
@@ -91,3 +95,4 @@ export async function launchClaudeSession(
     hint: `Run in another terminal:\n  cd ${cwd}\n  ${command}`,
   };
 }
+

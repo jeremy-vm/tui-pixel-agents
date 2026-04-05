@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 import { HookEventHandler } from '../../server/src/hookEventHandler.js';
 import { PixelAgentsServer } from '../../server/src/server.js';
@@ -324,10 +325,11 @@ export class TuiApp {
 
   /** Find the assets directory relative to this script */
   private resolveAssetsRoot(): string | null {
-    // When bundled: dist/index.js lives one level above dist/assets/
+    // Use import.meta.url to reliably resolve the script location in ESM
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
     const candidates = [
-      path.join(path.dirname(process.argv[1] ?? ''), '..', 'webview-ui', 'public'),
-      path.join(path.dirname(process.argv[1] ?? ''), '..', 'dist'),
+      path.join(scriptDir, '..', 'webview-ui', 'public'),
+      path.join(scriptDir, '..', 'dist'),
       path.join(process.cwd(), 'webview-ui', 'public'),
       path.join(process.cwd(), 'dist'),
     ];
@@ -340,15 +342,19 @@ export class TuiApp {
   // ── Hook server ──────────────────────────────────────────────
   private async startServer(): Promise<void> {
     try {
-      // Create a fake webview proxy that delegates postMessage to the dispatch callback.
-      // This lets HookEventHandler (which expects a vscode.Webview) work in the TUI.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fakeWebview: any = { postMessage: (msg: MessagePayload) => { this.dispatch(msg); return true; } };
+      // Create a minimal webview proxy that delegates postMessage to the dispatch callback.
+      // HookEventHandler expects a vscode.Webview but only calls .postMessage() at runtime.
+      // This object satisfies that contract without depending on VS Code types.
+      const fakeWebview: { postMessage: (msg: MessagePayload) => boolean } = {
+        postMessage: (msg: MessagePayload) => { this.dispatch(msg); return true; },
+      };
       this.hookHandler = new HookEventHandler(
         this.agents,
         this.waitingTimers,
         this.permissionTimers,
-        () => fakeWebview,
+        // Cast through unknown: HookEventHandler expects vscode.Webview but only calls
+        // postMessage() at runtime. The fakeWebview object satisfies that runtime contract.
+        () => fakeWebview as unknown as ReturnType<() => { postMessage: (msg: unknown) => boolean }>,
       );
       this.server = new PixelAgentsServer();
       this.server.onHookEvent((providerId, event) => {
@@ -359,9 +365,10 @@ export class TuiApp {
         try {
           installHooks();
           // Try to copy hook script from relative dist/ directory
-          const hookSrc = path.join(path.dirname(process.argv[1] ?? ''), '..', 'dist', 'hooks');
+          const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+          const hookSrc = path.join(scriptDir, '..', 'dist', 'hooks');
           if (fs.existsSync(hookSrc)) {
-            copyHookScript(path.join(path.dirname(process.argv[1] ?? ''), '..'));
+            copyHookScript(path.join(scriptDir, '..'));
           }
         } catch {
           // Hooks are optional — don't fail if install fails
