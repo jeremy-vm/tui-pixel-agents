@@ -343,8 +343,10 @@ export class TuiApp {
   private async startServer(): Promise<void> {
     try {
       // Create a minimal webview proxy that delegates postMessage to the dispatch callback.
-      // HookEventHandler expects a vscode.Webview but only calls .postMessage() at runtime.
-      // This object satisfies that contract without depending on VS Code types.
+      // HookEventHandler was designed for VS Code and accepts `() => vscode.Webview | undefined`.
+      // In the TUI there is no webview, so we pass an adapter object that implements the only
+      // method HookEventHandler calls at runtime: postMessage(). If HookEventHandler is ever
+      // refactored to accept a typed callback interface, this adapter can be simplified.
       const fakeWebview: { postMessage: (msg: MessagePayload) => boolean } = {
         postMessage: (msg: MessagePayload) => { this.dispatch(msg); return true; },
       };
@@ -352,8 +354,7 @@ export class TuiApp {
         this.agents,
         this.waitingTimers,
         this.permissionTimers,
-        // Cast through unknown: HookEventHandler expects vscode.Webview but only calls
-        // postMessage() at runtime. The fakeWebview object satisfies that runtime contract.
+        // Cast through unknown: the runtime object satisfies vscode.Webview's postMessage contract.
         () => fakeWebview as unknown as ReturnType<() => { postMessage: (msg: unknown) => boolean }>,
       );
       this.server = new PixelAgentsServer();

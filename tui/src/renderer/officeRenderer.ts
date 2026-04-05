@@ -272,7 +272,7 @@ export function renderFrame(
   renderScene(buf, allFurniture, characters, offsetX, offsetY, zoom, selectedAgentId, null);
   renderBubbles(buf, characters, offsetX, offsetY, zoom);
 
-  void seats; // seat indicators not drawn in TUI mode
+  void seats; // seat indicators not drawn in TUI mode; parameter kept for API compatibility
 
   return { offsetX, offsetY };
 }
