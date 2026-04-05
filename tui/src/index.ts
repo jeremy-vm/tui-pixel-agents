@@ -12,9 +12,10 @@
  *   --help               Show this help
  */
 
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
+
 import { TuiApp } from './app.js';
 
 const VERSION = process.env.TUI_VERSION ?? '0.1.0';

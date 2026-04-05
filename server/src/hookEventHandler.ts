@@ -1,10 +1,6 @@
-// TODO(Standalone version): Replace vscode.Webview with MessageSender interface from core/src/messages.ts
-import type * as vscode from 'vscode';
-
-// TODO(Standalone version): Move timerManager and types to server/src/ to eliminate cross-boundary imports
-import { cancelPermissionTimer, cancelWaitingTimer } from '../../src/timerManager.js';
-import type { AgentState } from '../../src/types.js';
 import { HOOK_EVENT_BUFFER_MS } from './constants.js';
+import { cancelPermissionTimer, cancelWaitingTimer } from './timerManager.js';
+import type { AgentState, MessageSender } from './types.js';
 
 /** Normalized hook event received from any provider's hook script via the HTTP server. */
 export interface HookEvent {
@@ -42,7 +38,7 @@ export class HookEventHandler {
     private agents: Map<number, AgentState>,
     private waitingTimers: Map<number, ReturnType<typeof setTimeout>>,
     private permissionTimers: Map<number, ReturnType<typeof setTimeout>>,
-    private getWebview: () => vscode.Webview | undefined,
+    private getSender: () => MessageSender | undefined,
   ) {}
 
   /** Register an agent for hook event routing. Flushes any buffered events for this session. */
@@ -88,14 +84,14 @@ export class HookEventHandler {
     agent.hookDelivered = true;
 
     const eventName = event.hook_event_name;
-    const webview = this.getWebview();
+    const sender = this.getSender();
 
     if (eventName === 'PermissionRequest') {
-      this.handlePermissionRequest(agent, agentId, webview);
+      this.handlePermissionRequest(agent, agentId, sender);
     } else if (eventName === 'Notification') {
-      this.handleNotification(event, agent, agentId, webview);
+      this.handleNotification(event, agent, agentId, sender);
     } else if (eventName === 'Stop') {
-      this.handleStop(agent, agentId, webview);
+      this.handleStop(agent, agentId, sender);
     }
   }
 
@@ -103,17 +99,17 @@ export class HookEventHandler {
   private handlePermissionRequest(
     agent: AgentState,
     agentId: number,
-    webview: vscode.Webview | undefined,
+    sender: MessageSender | undefined,
   ): void {
     cancelPermissionTimer(agentId, this.permissionTimers);
     agent.permissionSent = true;
-    webview?.postMessage({
+    sender?.postMessage({
       type: 'agentToolPermission',
       id: agentId,
     });
     // Also notify any sub-agents with active tools
     for (const parentToolId of agent.activeSubagentToolNames.keys()) {
-      webview?.postMessage({
+      sender?.postMessage({
         type: 'subagentToolPermission',
         id: agentId,
         parentToolId,
@@ -126,25 +122,25 @@ export class HookEventHandler {
     event: HookEvent,
     agent: AgentState,
     agentId: number,
-    webview: vscode.Webview | undefined,
+    sender: MessageSender | undefined,
   ): void {
     if (event.notification_type === 'permission_prompt') {
       cancelPermissionTimer(agentId, this.permissionTimers);
       agent.permissionSent = true;
-      webview?.postMessage({
+      sender?.postMessage({
         type: 'agentToolPermission',
         id: agentId,
       });
       // Also notify any sub-agents with active non-exempt tools
       for (const parentToolId of agent.activeSubagentToolNames.keys()) {
-        webview?.postMessage({
+        sender?.postMessage({
           type: 'subagentToolPermission',
           id: agentId,
           parentToolId,
         });
       }
     } else if (event.notification_type === 'idle_prompt') {
-      this.markAgentWaiting(agent, agentId, webview);
+      this.markAgentWaiting(agent, agentId, sender);
     }
   }
 
@@ -152,9 +148,9 @@ export class HookEventHandler {
   private handleStop(
     agent: AgentState,
     agentId: number,
-    webview: vscode.Webview | undefined,
+    sender: MessageSender | undefined,
   ): void {
-    this.markAgentWaiting(agent, agentId, webview);
+    this.markAgentWaiting(agent, agentId, sender);
   }
 
   /**
@@ -165,7 +161,7 @@ export class HookEventHandler {
   private markAgentWaiting(
     agent: AgentState,
     agentId: number,
-    webview: vscode.Webview | undefined,
+    sender: MessageSender | undefined,
   ): void {
     cancelWaitingTimer(agentId, this.waitingTimers);
     cancelPermissionTimer(agentId, this.permissionTimers);
@@ -184,12 +180,12 @@ export class HookEventHandler {
           agent.activeSubagentToolNames.delete(toolId);
         }
       }
-      webview?.postMessage({ type: 'agentToolsClear', id: agentId });
+      sender?.postMessage({ type: 'agentToolsClear', id: agentId });
       // Re-send background agent tools
       for (const toolId of agent.backgroundAgentToolIds) {
         const status = agent.activeToolStatuses.get(toolId);
         if (status) {
-          webview?.postMessage({
+          sender?.postMessage({
             type: 'agentToolStart',
             id: agentId,
             toolId,
@@ -203,13 +199,13 @@ export class HookEventHandler {
       agent.activeToolNames.clear();
       agent.activeSubagentToolIds.clear();
       agent.activeSubagentToolNames.clear();
-      webview?.postMessage({ type: 'agentToolsClear', id: agentId });
+      sender?.postMessage({ type: 'agentToolsClear', id: agentId });
     }
 
     agent.isWaiting = true;
     agent.permissionSent = false;
     agent.hadToolsInTurn = false;
-    webview?.postMessage({
+    sender?.postMessage({
       type: 'agentStatus',
       id: agentId,
       status: 'waiting',

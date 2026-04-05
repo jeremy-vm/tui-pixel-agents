@@ -1,11 +1,14 @@
-import type * as vscode from 'vscode';
+/** Minimal interface for sending messages to a UI layer (replaces vscode.Webview). */
+export interface MessageSender {
+  postMessage(msg: Record<string, unknown>): void;
+}
 
 export interface AgentState {
   id: number;
   sessionId: string;
-  /** Terminal reference — undefined for extension panel sessions */
-  terminalRef?: vscode.Terminal;
-  /** Whether this agent was detected from an external source (VS Code extension panel, etc.) */
+  /** PID of the spawned process, if applicable */
+  childPid?: number;
+  /** Whether this agent was auto-detected from an external JSONL file */
   isExternal: boolean;
   projectDir: string;
   jsonlFile: string;
@@ -16,7 +19,7 @@ export interface AgentState {
   activeToolNames: Map<string, string>;
   activeSubagentToolIds: Map<string, Set<string>>; // parentToolId → active sub-tool IDs
   activeSubagentToolNames: Map<string, Map<string, string>>; // parentToolId → (subToolId → toolName)
-  backgroundAgentToolIds: Set<string>; // tool IDs for run_in_background Agent calls (stay alive until queue-operation)
+  backgroundAgentToolIds: Set<string>; // tool IDs for run_in_background Agent calls
   isWaiting: boolean;
   permissionSent: boolean;
   hadToolsInTurn: boolean;
@@ -35,12 +38,8 @@ export interface AgentState {
 export interface PersistedAgent {
   id: number;
   sessionId?: string;
-  /** Terminal name — empty string for extension panel sessions */
-  terminalName: string;
-  /** Whether this agent was detected from an external source */
-  isExternal?: boolean;
   jsonlFile: string;
   projectDir: string;
-  /** Workspace folder name (only set for multi-root workspaces) */
   folderName?: string;
+  isExternal?: boolean;
 }

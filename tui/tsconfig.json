@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
@@ -18,7 +18,6 @@
     "src",
     "../webview-ui/src/office",
     "../webview-ui/src/constants.ts",
-    "../webview-ui/src/components/ui/types.ts",
     "../webview-ui/src/office/sprites/*.json"
   ]
 }

@@ -6,9 +6,9 @@
  * Caches colorized SpriteData by (pattern, h, s, b, c) key.
  */
 
-import type { ColorValue } from '../components/ui/types.js';
 import { CANVAS_ERROR_TILE_COLOR, FALLBACK_FLOOR_COLOR, TILE_SIZE } from '../constants.js';
 import { clearColorizeCache, getColorizedSprite } from './colorize.js';
+import type { ColorValue } from './types.js';
 import type { SpriteData } from './types.js';
 
 /** Default solid gray 16×16 tile used when floor tile PNGs are not loaded */

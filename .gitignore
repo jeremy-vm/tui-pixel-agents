@@ -14,15 +14,10 @@ npm-debug.log*
 Thumbs.db
 
 # IDE
-.vscode-test/
 /.idea
-
-# E2E test artifacts
-test-results/
-playwright-report/
+.vscode/
 
 # Build artifacts
-*.vsix
 *.map
 
 # Environment files

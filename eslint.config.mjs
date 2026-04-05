@@ -38,7 +38,7 @@ export default [
     },
   },
   {
-    files: ['src/constants.ts'],
+    files: ['webview-ui/src/constants.ts', 'tui/src/renderer/officeRenderer.ts', 'tui/src/constants.ts'],
     rules: {
       'pixel-agents/no-inline-colors': 'off',
     },

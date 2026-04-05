@@ -1,24 +1,18 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreDependencies": ["tailwindcss", "pngjs", "@types/pngjs"],
+  "ignoreDependencies": ["pngjs", "@types/pngjs"],
   "ignore": [
-    "server/src/providers/file/hooks/claude-hook.ts",
-    "webview-ui/src/office/components/index.ts",
-    "webview-ui/src/office/editor/index.ts",
-    "webview-ui/src/office/engine/index.ts",
-    "webview-ui/src/office/layout/index.ts",
-    "webview-ui/src/office/sprites/index.ts"
+    "server/src/providers/file/hooks/claude-hook.ts"
   ],
   "workspaces": {
     ".": {
       "entry": [
-        "src/extension.ts",
-        "e2e/**/*.ts"
+        "tui/src/index.ts"
       ],
       "project": [
-        "src/**/*.ts",
+        "tui/src/**/*.ts",
         "shared/**/*.ts",
-        "e2e/**/*.ts"
+        "webview-ui/src/**/*.ts"
       ]
     },
     "server": {
@@ -29,14 +23,6 @@
       "project": [
         "src/**/*.ts",
         "__tests__/**/*.ts"
-      ]
-    },
-    "webview-ui": {
-      "entry": [
-        "test/**/*.ts"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}"
       ]
     }
   }
