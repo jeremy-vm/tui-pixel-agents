@@ -1,0 +1,23 @@
+{
+  "name": "pixel-agents-tui",
+  "version": "0.1.0",
+  "description": "TUI (terminal) version of Pixel Agents — pixel art office that visualizes Claude Code agents",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pixel-agents": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "dev": "node esbuild.js --watch",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "typescript": "^5.9.3"
+  }
+}
