@@ -46,6 +46,8 @@ const buildOptions = {
 
         // Resolve bare package specifiers from root node_modules
         build.onResolve({ filter: /^[^./]/ }, (args) => {
+          // Don't resolve packages that should remain external
+          if (buildOptions.external?.includes(args.path)) return null;
           const rootNm = r('../node_modules');
           const candidates = [
             resolve(rootNm, args.path),
