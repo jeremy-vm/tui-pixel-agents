@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button.js';
 import { ColorPicker } from '../../components/ui/ColorPicker.js';
 import { ItemSelect } from '../../components/ui/ItemSelect.js';
-import type { ColorValue } from '../../components/ui/types.js';
+import type { ColorValue } from '../types.js';
 import { CANVAS_FALLBACK_TILE_COLOR } from '../../constants.js';
 import { getColorizedSprite } from '../colorize.js';
 import { getColorizedFloorSprite, getFloorPatternCount, hasFloorSprites } from '../floorTiles.js';

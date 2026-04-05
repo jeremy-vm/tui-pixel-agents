@@ -38,7 +38,7 @@ import type {
 import { CharacterState, TILE_SIZE, TileType } from '../../../webview-ui/src/office/types.js';
 import { getWallInstances, hasWallSprites, wallColorToHex } from '../../../webview-ui/src/office/wallTiles.js';
 import { getCharacterSprite } from '../../../webview-ui/src/office/engine/characters.js';
-import type { ColorValue } from '../../../webview-ui/src/components/ui/types.js';
+import type { ColorValue } from '../../../webview-ui/src/office/types.js';
 import { parseColor, PixelBuffer, rgba } from './pixelBuffer.js';
 
 // ── Tile grid ───────────────────────────────────────────────────

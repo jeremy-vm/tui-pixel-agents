@@ -1,4 +1,4 @@
-import type { ColorValue } from '../../components/ui/types.js';
+import type { ColorValue } from '../types.js';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, UNDO_STACK_MAX_SIZE } from '../../constants.js';
 import type { OfficeLayout, TileType as TileTypeVal } from '../types.js';
 import { EditTool, TileType } from '../types.js';

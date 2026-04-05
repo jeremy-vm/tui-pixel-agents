@@ -1,4 +1,4 @@
-import type { ColorValue } from '../../components/ui/types.js';
+import type { ColorValue } from '../types.js';
 import { getColorizedSprite } from '../colorize.js';
 import type {
   FurnitureInstance,

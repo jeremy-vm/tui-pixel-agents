@@ -342,20 +342,15 @@ export class TuiApp {
   // ── Hook server ──────────────────────────────────────────────
   private async startServer(): Promise<void> {
     try {
-      // Create a minimal webview proxy that delegates postMessage to the dispatch callback.
-      // HookEventHandler was designed for VS Code and accepts `() => vscode.Webview | undefined`.
-      // In the TUI there is no webview, so we pass an adapter object that implements the only
-      // method HookEventHandler calls at runtime: postMessage(). If HookEventHandler is ever
-      // refactored to accept a typed callback interface, this adapter can be simplified.
-      const fakeWebview: { postMessage: (msg: MessagePayload) => boolean } = {
-        postMessage: (msg: MessagePayload) => { this.dispatch(msg); return true; },
+      // Create a MessageSender that delegates postMessage to the TUI dispatch callback.
+      const sender = {
+        postMessage: (msg: Record<string, unknown>) => { this.dispatch(msg); },
       };
       this.hookHandler = new HookEventHandler(
         this.agents,
         this.waitingTimers,
         this.permissionTimers,
-        // Cast through unknown: the runtime object satisfies vscode.Webview's postMessage contract.
-        () => fakeWebview as unknown as ReturnType<() => { postMessage: (msg: unknown) => boolean }>,
+        () => sender,
       );
       this.server = new PixelAgentsServer();
       this.server.onHookEvent((providerId, event) => {
@@ -551,7 +546,7 @@ export class TuiApp {
       this.panY,
       this.selectedAgentId,
       os.seats,
-      os.layout.tileColors as Array<import('../../webview-ui/src/components/ui/types.js').ColorValue | null> | undefined,
+      os.layout.tileColors as Array<import('../../webview-ui/src/office/types.js').ColorValue | null> | undefined,
       os.layout.cols,
       os.layout.rows,
     );

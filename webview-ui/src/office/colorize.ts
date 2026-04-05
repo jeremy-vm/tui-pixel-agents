@@ -6,7 +6,7 @@
  * - Adjust (default for furniture): shift original pixel HSL values.
  */
 
-import type { ColorValue } from '../components/ui/types.js';
+import type { ColorValue } from './types.js';
 import type { SpriteData } from './types.js';
 
 /** Generic colorized sprite cache: arbitrary string key → SpriteData */

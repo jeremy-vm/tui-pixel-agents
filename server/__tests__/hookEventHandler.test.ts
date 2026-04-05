@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AgentState } from '../../src/types.js';
 import { HookEventHandler } from '../src/hookEventHandler.js';
+import type { AgentState, MessageSender } from '../src/types.js';
 
 /** Minimal AgentState for testing. */
 function createTestAgent(overrides: Partial<AgentState> = {}): AgentState {
   return {
     id: 1,
-    terminalRef: undefined,
     isExternal: true,
     projectDir: '/test',
     jsonlFile: '/test/session.jsonl',
@@ -24,18 +23,17 @@ function createTestAgent(overrides: Partial<AgentState> = {}): AgentState {
     hadToolsInTurn: false,
     lastDataAt: 0,
     linesProcessed: 0,
-    hasScannedSinceIdle: false,
     seenUnknownRecordTypes: new Set(),
+    hookDelivered: false,
     ...overrides,
   } as AgentState;
 }
 
-function createMockWebview() {
+function createMockSender() {
   const messages: Array<Record<string, unknown>> = [];
   return {
     postMessage: vi.fn((msg: Record<string, unknown>) => {
       messages.push(msg);
-      return Promise.resolve(true);
     }),
     messages,
   };
@@ -45,19 +43,19 @@ describe('HookEventHandler', () => {
   let agents: Map<number, AgentState>;
   let waitingTimers: Map<number, ReturnType<typeof setTimeout>>;
   let permissionTimers: Map<number, ReturnType<typeof setTimeout>>;
-  let mockWebview: ReturnType<typeof createMockWebview>;
+  let mockSender: ReturnType<typeof createMockSender>;
   let handler: HookEventHandler;
 
   beforeEach(() => {
     agents = new Map();
     waitingTimers = new Map();
     permissionTimers = new Map();
-    mockWebview = createMockWebview();
+    mockSender = createMockSender();
     handler = new HookEventHandler(
       agents,
       waitingTimers,
       permissionTimers,
-      () => mockWebview as unknown as import('vscode').Webview,
+      () => mockSender as MessageSender,
     );
   });
 
@@ -72,7 +70,7 @@ describe('HookEventHandler', () => {
       session_id: 'sess-1',
     });
 
-    const msg = mockWebview.messages.find((m) => m.type === 'agentToolPermission');
+    const msg = mockSender.messages.find((m) => m.type === 'agentToolPermission');
     expect(msg).toBeTruthy();
     expect(msg?.id).toBe(1);
   });
@@ -106,7 +104,7 @@ describe('HookEventHandler', () => {
       session_id: 'sess-1',
     });
 
-    const subMsg = mockWebview.messages.find((m) => m.type === 'subagentToolPermission');
+    const subMsg = mockSender.messages.find((m) => m.type === 'subagentToolPermission');
     expect(subMsg).toBeTruthy();
     expect(subMsg?.parentToolId).toBe('tool-parent');
   });
@@ -123,7 +121,7 @@ describe('HookEventHandler', () => {
       notification_type: 'permission_prompt',
     });
 
-    const msg = mockWebview.messages.find((m) => m.type === 'agentToolPermission');
+    const msg = mockSender.messages.find((m) => m.type === 'agentToolPermission');
     expect(msg).toBeTruthy();
     expect(agent.permissionSent).toBe(true);
   });
@@ -141,7 +139,7 @@ describe('HookEventHandler', () => {
     });
 
     expect(agent.isWaiting).toBe(true);
-    const msg = mockWebview.messages.find(
+    const msg = mockSender.messages.find(
       (m) => m.type === 'agentStatus' && m.status === 'waiting',
     );
     expect(msg).toBeTruthy();
@@ -161,7 +159,7 @@ describe('HookEventHandler', () => {
     expect(agent.isWaiting).toBe(true);
     // agentToolsClear only sent when there are foreground tools
     // With empty tools, only agentStatus waiting is sent
-    const waitMsg = mockWebview.messages.find(
+    const waitMsg = mockSender.messages.find(
       (m) => m.type === 'agentStatus' && m.status === 'waiting',
     );
     expect(waitMsg).toBeTruthy();
@@ -190,10 +188,10 @@ describe('HookEventHandler', () => {
     // Background preserved
     expect(agent.activeToolIds.has('bg-tool')).toBe(true);
     // agentToolsClear was sent (had foreground tools)
-    const clearMsg = mockWebview.messages.find((m) => m.type === 'agentToolsClear');
+    const clearMsg = mockSender.messages.find((m) => m.type === 'agentToolsClear');
     expect(clearMsg).toBeTruthy();
     // Background tool re-sent
-    const reSent = mockWebview.messages.find(
+    const reSent = mockSender.messages.find(
       (m) => m.type === 'agentToolStart' && m.toolId === 'bg-tool',
     );
     expect(reSent).toBeTruthy();
@@ -223,7 +221,7 @@ describe('HookEventHandler', () => {
     });
 
     // No messages sent (buffered)
-    expect(mockWebview.messages).toHaveLength(0);
+    expect(mockSender.messages).toHaveLength(0);
   });
 
   // 10. Flushes buffer on registerAgent
@@ -236,12 +234,12 @@ describe('HookEventHandler', () => {
       hook_event_name: 'Stop',
       session_id: 'sess-1',
     });
-    expect(mockWebview.messages).toHaveLength(0);
+    expect(mockSender.messages).toHaveLength(0);
 
     // Register triggers flush
     handler.registerAgent('sess-1', 1);
 
-    const waitMsg = mockWebview.messages.find(
+    const waitMsg = mockSender.messages.find(
       (m) => m.type === 'agentStatus' && m.status === 'waiting',
     );
     expect(waitMsg).toBeTruthy();
@@ -264,7 +262,7 @@ describe('HookEventHandler', () => {
     handler.registerAgent('expired-sess', 2);
 
     // No messages (event was pruned)
-    expect(mockWebview.messages).toHaveLength(0);
+    expect(mockSender.messages).toHaveLength(0);
 
     handler.dispose();
   });

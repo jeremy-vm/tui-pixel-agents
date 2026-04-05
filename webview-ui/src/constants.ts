@@ -1,4 +1,4 @@
-import type { ColorValue } from './components/ui/types.js';
+import type { ColorValue } from './office/types.js';
 
 // ── Grid & Layout ────────────────────────────────────────────
 export const TILE_SIZE = 16;

@@ -23,8 +23,18 @@ export const TileType = {
 export type TileType = (typeof TileType)[keyof typeof TileType];
 
 /** Re-export ColorValue for consumers that import color types from office/types */
-export type { ColorValue } from '../components/ui/types.js';
-import type { ColorValue } from '../components/ui/types.js';
+export interface ColorValue {
+  /** Hue: 0-360 in colorize mode, -180 to +180 in adjust mode */
+  h: number;
+  /** Saturation: 0-100 in colorize mode, -100 to +100 in adjust mode */
+  s: number;
+  /** Brightness -100 to 100 */
+  b: number;
+  /** Contrast -100 to 100 */
+  c: number;
+  /** When true, use Photoshop-style Colorize (grayscale → fixed HSL). Default: adjust mode. */
+  colorize?: boolean;
+}
 
 export const CharacterState = {
   IDLE: 'idle',
