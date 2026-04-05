@@ -12,16 +12,17 @@
  */
 
 import {
+  BUBBLE_FADE_DURATION_SEC,
   BUBBLE_SITTING_OFFSET_PX,
   BUBBLE_VERTICAL_OFFSET_PX,
-  BUBBLE_FADE_DURATION_SEC,
   CHARACTER_SITTING_OFFSET_PX,
   CHARACTER_Z_SORT_OFFSET,
   FALLBACK_FLOOR_COLOR,
+  HOVERED_OUTLINE_ALPHA,
   OUTLINE_Z_SORT_OFFSET,
   SELECTED_OUTLINE_ALPHA,
-  HOVERED_OUTLINE_ALPHA,
 } from '../../../webview-ui/src/constants.js';
+import { getCharacterSprite } from '../../../webview-ui/src/office/engine/characters.js';
 import { getColorizedFloorSprite, hasFloorSprites, WALL_COLOR } from '../../../webview-ui/src/office/floorTiles.js';
 import {
   BUBBLE_PERMISSION_SPRITE,
@@ -35,10 +36,9 @@ import type {
   SpriteData,
   TileType as TileTypeVal,
 } from '../../../webview-ui/src/office/types.js';
+import type { ColorValue } from '../../../webview-ui/src/office/types.js';
 import { CharacterState, TILE_SIZE, TileType } from '../../../webview-ui/src/office/types.js';
 import { getWallInstances, hasWallSprites, wallColorToHex } from '../../../webview-ui/src/office/wallTiles.js';
-import { getCharacterSprite } from '../../../webview-ui/src/office/engine/characters.js';
-import type { ColorValue } from '../../../webview-ui/src/office/types.js';
 import { parseColor, PixelBuffer, rgba } from './pixelBuffer.js';
 
 // ── Tile grid ───────────────────────────────────────────────────

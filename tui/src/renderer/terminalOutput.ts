@@ -14,7 +14,7 @@
  * Most modern terminal emulators (iTerm2, GNOME Terminal, Windows Terminal, Kitty, etc.) support this.
  */
 
-import { unpackRgba, type PixelBuffer } from './pixelBuffer.js';
+import { type PixelBuffer,unpackRgba } from './pixelBuffer.js';
 
 /** ANSI reset sequence */
 const RESET = '\x1b[0m';

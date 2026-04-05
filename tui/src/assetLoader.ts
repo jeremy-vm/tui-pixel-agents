@@ -23,7 +23,7 @@ import {
 import type { CharacterDirectionSprites } from '../../shared/assets/types.js';
 import { LAYOUT_REVISION_KEY } from './constants.js';
 
-export type { FurnitureAsset, CharacterDirectionSprites };
+export type { CharacterDirectionSprites,FurnitureAsset };
 
 export interface LoadedAssets {
   catalog: FurnitureAsset[];

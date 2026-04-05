@@ -15,19 +15,26 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 
 import { HookEventHandler } from '../../server/src/hookEventHandler.js';
-import { PixelAgentsServer } from '../../server/src/server.js';
 import {
-  installHooks,
   copyHookScript,
+  installHooks,
 } from '../../server/src/providers/file/claudeHookInstaller.js';
-
+import { PixelAgentsServer } from '../../server/src/server.js';
+import { OfficeState } from '../../webview-ui/src/office/engine/officeState.js';
+import { setFloorSprites } from '../../webview-ui/src/office/floorTiles.js';
+import { buildDynamicCatalog } from '../../webview-ui/src/office/layout/furnitureCatalog.js';
+import { migrateLayoutColors } from '../../webview-ui/src/office/layout/layoutSerializer.js';
+import { setCharacterTemplates } from '../../webview-ui/src/office/sprites/spriteData.js';
+import { extractToolName } from '../../webview-ui/src/office/toolUtils.js';
+import type { OfficeLayout } from '../../webview-ui/src/office/types.js';
+import { setWallSprites } from '../../webview-ui/src/office/wallTiles.js';
 import {
+  getProjectDirPath,
   launchNewProcess,
+  persistAgentsToDisk,
   removeAgent,
   restoreAgents,
-  persistAgentsToDisk,
   sendCurrentAgentStatuses,
-  getProjectDirPath,
 } from './agentManager.js';
 import {
   loadCharacterSprites,
@@ -36,39 +43,30 @@ import {
   loadFurnitureAssets,
   loadWallTiles,
 } from './assetLoader.js';
+import type { DispatchFn, MessagePayload } from './dispatch.js';
 import {
   dismissedJsonlFiles,
   startExternalSessionScanning,
-  startStaleExternalAgentCheck,
   startGlobalSessionScanning,
+  startStaleExternalAgentCheck,
 } from './fileWatcher.js';
 import { startGameLoop } from './gameLoop.js';
 import { loadLayout, watchLayoutFile } from './layoutPersistence.js';
-import type { DispatchFn, MessagePayload } from './dispatch.js';
 import { renderFrame } from './renderer/officeRenderer.js';
 import { PixelBuffer } from './renderer/pixelBuffer.js';
 import {
-  pixelBufferToAnsi,
-  renderStatusBar,
-  moveTo,
-  HIDE_CURSOR,
-  SHOW_CURSOR,
+  CLEAR_SCREEN,
   ENTER_ALT_SCREEN,
   EXIT_ALT_SCREEN,
-  CLEAR_SCREEN,
+  HIDE_CURSOR,
+  moveTo,
+  pixelBufferToAnsi,
+  renderStatusBar,
+  SHOW_CURSOR,
 } from './renderer/terminalOutput.js';
+import { enableRawMode, type KeyEvent,onKey } from './terminal/input.js';
 import { getTerminalSize, onResize, write } from './terminal/screen.js';
-import { enableRawMode, onKey, type KeyEvent } from './terminal/input.js';
 import type { AgentState } from './types.js';
-
-import { OfficeState } from '../../webview-ui/src/office/engine/officeState.js';
-import { buildDynamicCatalog } from '../../webview-ui/src/office/layout/furnitureCatalog.js';
-import { setFloorSprites } from '../../webview-ui/src/office/floorTiles.js';
-import { setWallSprites } from '../../webview-ui/src/office/wallTiles.js';
-import { setCharacterTemplates } from '../../webview-ui/src/office/sprites/spriteData.js';
-import { migrateLayoutColors } from '../../webview-ui/src/office/layout/layoutSerializer.js';
-import type { OfficeLayout } from '../../webview-ui/src/office/types.js';
-import { extractToolName } from '../../webview-ui/src/office/toolUtils.js';
 
 export interface TuiAppOptions {
   /** Working directory for the Claude session */

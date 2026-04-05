@@ -13,7 +13,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { JSONL_POLL_INTERVAL_MS } from '../../server/src/constants.js';
-import { TUI_AGENTS_FILE_NAME, LAYOUT_FILE_DIR } from './constants.js';
+import { LAYOUT_FILE_DIR,TUI_AGENTS_FILE_NAME } from './constants.js';
 import type { DispatchFn } from './dispatch.js';
 import {
   ensureProjectScan,

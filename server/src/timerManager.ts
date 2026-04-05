@@ -1,6 +1,5 @@
-import type { MessageSender } from './types.js';
-import type { AgentState } from './types.js';
 import { PERMISSION_TIMER_DELAY_MS } from './constants.js';
+import type { AgentState, MessageSender } from './types.js';
 
 export function clearAgentActivity(
   agent: AgentState | undefined,

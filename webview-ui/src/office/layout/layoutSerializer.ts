@@ -1,5 +1,5 @@
-import type { ColorValue } from '../types.js';
 import { getColorizedSprite } from '../colorize.js';
+import type { ColorValue } from '../types.js';
 import type {
   FurnitureInstance,
   OfficeLayout,
